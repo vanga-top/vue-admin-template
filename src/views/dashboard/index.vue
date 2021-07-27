@@ -14,6 +14,7 @@
 import { mapGetters } from 'vuex'
 import PanelGroup from './components/PanelGroup'
 import LineChart from './components/LineChart'
+import { initPanelData } from '@/api/dashboard'
 
 const lineChartData = {
   avgScores: {
@@ -35,8 +36,8 @@ const lineChartData = {
 }
 
 const initChartData = {
-  avgScores: 10,
-  messages: 30
+  avgScores: 0,
+  messages: 0
 }
 
 export default {
@@ -50,6 +51,9 @@ export default {
       'name', 'token'
     ])
   },
+  created() {
+    this.init()
+  },
   data() {
     return {
       lineChartData: lineChartData.avgScores,
@@ -57,13 +61,19 @@ export default {
     }
   },
   methods: {
+    // 初始化数据
+    init() {
+      this.listLoading = true
+      initPanelData().then(response => {
+        this.initChartData = response.data
+        this.listLoading = false
+      }).catch(reason => {
+        console.error(reason)
+      })
+    },
+    // 同步chart的数据集
     handleSetLineChartData(type) {
       this.lineChartData = lineChartData[type]
-      // this.initChartData[type] = initChartData[type] + 10
-    },
-    handleInitChartData(type) {
-      console.log(type)
-      this.initChartData = initChartData[type]
     }
   }
 }

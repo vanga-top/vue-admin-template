@@ -64,6 +64,10 @@ export default {
     initData: {
       type: Object,
       required: true
+    },
+    listLoading: {
+      type: Boolean,
+      required: false
     }
   },
   components: {
