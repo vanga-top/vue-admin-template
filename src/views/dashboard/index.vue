@@ -1,7 +1,9 @@
 <template>
   <div class="dashboard-container">
     <div class="dashboard-text">name: {{ name }} token: {{ token }}</div>
-    <panel-group @handleSetLineChartData="handleSetLineChartData"/>
+    <!-- 几个面板 -->
+    <panel-group :init-data="initChartData" @handleSetLineChartData="handleSetLineChartData"/>
+    <!-- 联动的折线图 -->
     <el-row style="background:#fff;padding:16px 16px 0;margin-bottom:32px;">
       <line-chart :chart-data="lineChartData"/>
     </el-row>
@@ -14,9 +16,9 @@ import PanelGroup from './components/PanelGroup'
 import LineChart from './components/LineChart'
 
 const lineChartData = {
-  newVisitis: {
-    expectedData: [100, 120, 161, 134, 105, 160, 165],
-    actualData: [120, 82, 91, 154, 162, 140, 145]
+  avgScores: {
+    expectedData: [9.5, 9.5, 9.5, 9.5, 9.5, 9.5, 9.5],
+    actualData: [8.5, 9.5, 10.0, 6.7, 7.6, 9.5, 8.9]
   },
   messages: {
     expectedData: [200, 192, 120, 144, 160, 130, 140],
@@ -32,6 +34,11 @@ const lineChartData = {
   }
 }
 
+const initChartData = {
+  avgScores: 10,
+  messages: 30
+}
+
 export default {
   name: 'Dashboard',
   components: {
@@ -45,12 +52,18 @@ export default {
   },
   data() {
     return {
-      lineChartData: lineChartData.newVisitis
+      lineChartData: lineChartData.avgScores,
+      initChartData: initChartData
     }
   },
   methods: {
     handleSetLineChartData(type) {
       this.lineChartData = lineChartData[type]
+      // this.initChartData[type] = initChartData[type] + 10
+    },
+    handleInitChartData(type) {
+      console.log(type)
+      this.initChartData = initChartData[type]
     }
   }
 }
