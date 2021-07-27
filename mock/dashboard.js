@@ -1,8 +1,10 @@
 const Mock = require('mockjs')
 
 const data = Mock.mock({
-  avgScores: '@integer(0, 10.0)',
-  messages: '@integer(10, 300)'
+  avgScores: '@float(0, 10.0)',
+  runTask: '@integer(10, 300)',
+  warnTask: '@integer(10, 300)',
+  rank: '@integer(1, 300)'
 })
 
 module.exports = [

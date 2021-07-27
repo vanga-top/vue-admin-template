@@ -21,15 +21,15 @@ const lineChartData = {
     expectedData: [9.5, 9.5, 9.5, 9.5, 9.5, 9.5, 9.5],
     actualData: [8.5, 9.5, 10.0, 6.7, 7.6, 9.5, 8.9]
   },
-  messages: {
+  runTask: {
     expectedData: [200, 192, 120, 144, 160, 130, 140],
     actualData: [180, 160, 151, 106, 145, 150, 130]
   },
-  purchases: {
+  warnTask: {
     expectedData: [80, 100, 121, 104, 105, 90, 100],
     actualData: [120, 90, 100, 138, 142, 130, 130]
   },
-  shoppings: {
+  rank: {
     expectedData: [130, 140, 141, 142, 145, 150, 160],
     actualData: [120, 82, 91, 154, 162, 140, 130]
   }
@@ -37,7 +37,9 @@ const lineChartData = {
 
 const initChartData = {
   avgScores: 0,
-  messages: 0
+  runTask: 0,
+  warnTask: 0,
+  rank: 0
 }
 
 export default {
