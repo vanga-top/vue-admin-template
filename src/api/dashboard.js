@@ -10,3 +10,11 @@ export function initPanelData(params) {
     params
   })
 }
+
+export function getLineData(params) {
+  return request({
+    url: '/dashboard/line/data',
+    method: 'get',
+    params
+  })
+}

@@ -18,5 +18,13 @@ module.exports = [
         data: data
       }
     }
+  },
+  {
+    url: '/dashboard/line/data',
+    type: 'get',
+    response: _ => {
+      return
+    }
   }
 ]
+
