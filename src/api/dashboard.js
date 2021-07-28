@@ -18,3 +18,19 @@ export function getLineData(params) {
     params
   })
 }
+
+export function transactionList(query) {
+  return request({
+    url: '/dashboard/transaction/list',
+    method: 'get',
+    params: query
+  })
+}
+
+export function getBoxCardData(params) {
+  return request({
+    url: '/dashboard/boxcard/data',
+    method: 'get',
+    params
+  })
+}

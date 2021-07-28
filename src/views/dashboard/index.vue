@@ -7,6 +7,28 @@
     <el-row style="background:#fff;padding:16px 16px 0;margin-bottom:32px;">
       <line-chart :chart-data="lineChartData"/>
     </el-row>
+    <el-row :gutter="8">
+      <el-col
+        :xs="{span: 24}"
+        :sm="{span: 24}"
+        :md="{span: 24}"
+        :lg="{span: 12}"
+        :xl="{span: 12}"
+        style="padding-right:8px;margin-bottom:30px;"
+      >
+        <transaction-table/>
+      </el-col>
+      <el-col
+        :xs="{span: 24}"
+        :sm="{span: 24}"
+        :md="{span: 24}"
+        :lg="{span: 12}"
+        :xl="{span: 12}"
+        style="margin-bottom:30px;"
+      >
+        <box-card/>
+      </el-col>
+    </el-row>
   </div>
 </template>
 
@@ -14,39 +36,17 @@
 import { mapGetters } from 'vuex'
 import PanelGroup from './components/PanelGroup'
 import LineChart from './components/LineChart'
-import { initPanelData } from '@/api/dashboard'
-
-const lineChartData = {
-  avgScores: {
-    expectedData: [9.5, 9.5, 9.5, 9.5, 9.5, 9.5, 9.5],
-    actualData: [8.5, 9.5, 10.0, 6.7, 7.6, 9.5, 8.9]
-  },
-  runTask: {
-    expectedData: [200, 192, 120, 144, 160, 130, 140],
-    actualData: [180, 160, 151, 106, 145, 150, 130]
-  },
-  warnTask: {
-    expectedData: [80, 100, 121, 104, 105, 90, 100],
-    actualData: [120, 90, 100, 138, 142, 130, 130]
-  },
-  rank: {
-    expectedData: [130, 140, 141, 142, 145, 150, 160],
-    actualData: [120, 82, 91, 154, 162, 140, 130]
-  }
-}
-
-const initChartData = {
-  avgScores: 0,
-  runTask: 0,
-  warnTask: 0,
-  rank: 0
-}
+import TransactionTable from './components/TransactionTable'
+import BoxCard from './components/BoxCard'
+import { initPanelData, getLineData } from '@/api/dashboard'
 
 export default {
   name: 'Dashboard',
   components: {
     PanelGroup,
-    LineChart
+    LineChart,
+    TransactionTable,
+    BoxCard
   },
   computed: {
     ...mapGetters([
@@ -58,8 +58,8 @@ export default {
   },
   data() {
     return {
-      lineChartData: lineChartData.avgScores,
-      initChartData: initChartData
+      lineChartData: {},
+      initChartData: {}
     }
   },
   methods: {
@@ -72,10 +72,19 @@ export default {
       }).catch(reason => {
         console.error(reason)
       })
+      getLineData({ type: 'avgScores' }).then(response => {
+        this.lineChartData = response.data['avgScores']
+      }).catch(reason => {
+        console.error(reason)
+      })
     },
     // 同步chart的数据集
     handleSetLineChartData(type) {
-      this.lineChartData = lineChartData[type]
+      getLineData({ type: type }).then(response => {
+        this.lineChartData = response.data[type]
+      }).catch(reason => {
+        console.error(reason)
+      })
     }
   }
 }
