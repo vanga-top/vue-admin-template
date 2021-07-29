@@ -10,13 +10,13 @@
       style="padding-right:8px;margin-bottom:30px;"
     >
       <el-table :data="list" style="width: 100%;padding-top: 15px;">
-        <el-table-column label="编号" min-width="200" prop="order_no">
+        <el-table-column label="编号" min-width="200" prop="fileId">
         </el-table-column>
-        <el-table-column label="分值" width="195" align="center" prop="price">
+        <el-table-column label="分值" width="195" align="center" prop="score">
         </el-table-column>
         <el-table-column label="状态" width="100" align="center">
           <template slot-scope="scope">
-            <el-tag :type="scope.row.status | statusFilter" @click="handleDataChange(scope.row.order_no)">
+            <el-tag :type="scope.row.status | statusFilter" @click="handleDataChange(scope.row.fileId)">
               {{ scope.row.status }}
             </el-tag>
           </template>
@@ -36,9 +36,9 @@
         <div slot="header" class="box-card-header">
           <img src="https://dn-lego-static.qbox.me/1625036098-kodopage-banner.jpg">
         </div>
-        <div style="position:relative;" :data="rows">
+        <div style="position:relative;" :data="detailRows">
           <span class-name="mallki-text">综合视频评分:{{ selectedID }}</span>
-          <template v-for="(data,index) in rows">
+          <template v-for="(data,index) in detailRows">
             <div v-if="index===0" class="progress-item" style="padding-top:35px;">
               <span>{{ data.name }}</span>
               <el-progress :percentage="data.score"/>
@@ -55,7 +55,7 @@
 </template>
 
 <script>
-import { transactionList, getBoxCardData } from '@/api/dashboard'
+import { getScoreList, getBoxCardData } from '@/api/dashboard'
 
 const params = {}
 
@@ -75,7 +75,7 @@ export default {
   data() {
     return {
       list: null,
-      rows: null,
+      detailRows: null,
       selectedID: null
     }
   },
@@ -84,19 +84,22 @@ export default {
   },
   methods: {
     fetchData() { // 初始化调用
-      transactionList().then(response => {
-        this.list = response.data.items.slice(0, 10)
-        this.selectedID = this.list[0].order_no
+      getScoreList().then(response => {
+        this.list = response.data.items.slice(0, 15)
+        if (this.list === null || this.list.size === 0) {
+          return
+        }
+        this.selectedID = this.list[0].fileId
       })
       getBoxCardData(params).then(response => {
-        this.rows = response.data.items.slice(0, 10)
+        this.detailRows = response.data.items.slice(0, 10)
       })
     },
+    //点击切换事件
     handleDataChange(params) {
-      console.log(this.selectedID + '  .......  ' + params)
       this.selectedID = params
       getBoxCardData(params).then(response => {
-        this.rows = response.data.items.slice(0, 10)
+        this.detailRows = response.data.items.slice(0, 10)
       })
     }
   }

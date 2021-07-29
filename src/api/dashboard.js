@@ -19,9 +19,9 @@ export function getLineData(params) {
   })
 }
 
-export function transactionList(query) {
+export function getScoreList(query) {
   return request({
-    url: '/dashboard/transaction/list',
+    url: '/dashboard/score/list',
     method: 'get',
     params: query
   })
