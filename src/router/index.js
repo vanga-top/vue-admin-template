@@ -63,7 +63,7 @@ export const constantRoutes = [
       path: 'analysis',
       name: 'Analysis',
       component: () => import('@/views/analysis/index'),
-      meta: { title: '分析', icon: 'el-icon-s-unfold' }
+      meta: { title: '单例分析', icon: 'el-icon-s-unfold' }
     }]
   },
   {

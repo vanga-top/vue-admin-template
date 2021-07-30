@@ -4,8 +4,8 @@
       <el-row>
         <el-col :span="24">
           <el-form-item style="margin-bottom: 40px;" prop="fileId">
-            <MDinput v-model="postForm.fileId" :maxlength="100" name="name" required>
-              视频地址
+            <MDinput v-model="postForm.fileIdTxt" :maxlength="100" name="name" required>
+              视频地址/ID
             </MDinput>
           </el-form-item>
         </el-col>
@@ -14,21 +14,21 @@
         <el-row>
           <el-col :span="8">
             <el-form-item label-width="120px" label="Start Time:" class="postInfo-container-item">
-              <el-date-picker v-model="startTimeF" type="datetime" format="yyyy-MM-dd HH:mm:ss"
+              <el-date-picker v-model="startTime" type="datetime" format="yyyy-MM-dd HH:mm:ss"
                               placeholder="Select date and time"
               />
             </el-form-item>
           </el-col>
           <el-col :span="8">
             <el-form-item label-width="120px" label="End Time:" class="postInfo-container-item">
-              <el-date-picker v-model="endTimeF" type="datetime" format="yyyy-MM-dd HH:mm:ss"
+              <el-date-picker v-model="endTime" type="datetime" format="yyyy-MM-dd HH:mm:ss"
                               placeholder="Select date and time"
               />
             </el-form-item>
           </el-col>
           <el-col :span="8">
             <el-form-item label-width="120px" class="postInfo-container-item">
-              <el-button>开始分析</el-button>
+              <el-button @click="handleClick(postForm.fileIdTxt)">开始分析</el-button>
             </el-form-item>
           </el-col>
         </el-row>
@@ -40,22 +40,24 @@
       </el-col>
     </el-row>
     <el-row>
-      <el-col :span="8" style="font-size: 14px">
-        <el-row>文件：</el-row>
-        <el-row>综合分：</el-row>
-        <el-row>综合分：</el-row>
+      <el-col :span="8">
+        <el-row>文件：{{ fileId }}</el-row>
+        <el-row>综合分： {{ score }}</el-row>
+        <el-row>告警项：<span style="color: red">（{{ errCount }}）</span></el-row>
+        <el-row>优化项：<span style="color: #ffbc54">（{{ warnCount }}）</span></el-row>
+        <el-row>优化建议：</el-row>
+        <el-row style="white-space: pre">{{ suggest }}</el-row>
       </el-col>
       <el-col :span="16">
         <!-- -->
         <el-card class="box-card-component" style="margin-left:8px;">
           <div slot="header" class="box-card-header">
-            <!--            <img src="https://dn-lego-static.qbox.me/1625036098-kodopage-banner.jpg">-->
             <video src="https://media.w3.org/2010/05/sintel/trailer.mp4" controls="controls">
               您的浏览器不支持 video 标签。
             </video>
           </div>
           <div style="position:relative;" :data="detailRows">
-            <span class-name="mallki-text">综合视频评分:{{ selectedID }}</span>
+            <span class-name="mallki-text">综合视频评分: {{ score }}</span>
             <template v-for="(data,index) in detailRows">
               <div v-if="index===0" class="progress-item" style="padding-top:35px;">
                 <span>{{ data.name }}</span>
@@ -72,31 +74,47 @@
     </el-row>
   </el-form>
 
-
 </template>
 
 <script>
 import MDinput from '@/components/MDinput'
 import Player from './Player'
+import { getBoxCardData } from '@/api/dashboard'
 
 const defaultForm = {
-  fileId: '',
-  startTime: undefined,
-  endTime: undefined
+  fileIdTxt: ''
 }
 
 export default {
   data() {
+    const validateRequire = (rule, value, callback) => {
+      if (value === '') {
+        this.$message({
+          message: rule.field + '为必填项',
+          type: 'error'
+        })
+        callback(new Error(rule.field + '为必填项'))
+      } else {
+        callback()
+      }
+    }
     return {
       postForm: Object.assign({}, defaultForm),
-      rules: {}
+      rules: {
+        fileIdTxt: [{ validator: validateRequire }]
+      },
+      detailRows: null,
+      score: null,
+      errCount: 0,
+      warnCount: 0,
+      suggest: null
     }
   },
   components: {
     MDinput, Player
   },
   computed: {
-    startTimeF: {
+    startTime: {
       get() {
         return (+new Date(this.postForm.startTime))
       },
@@ -104,7 +122,7 @@ export default {
         this.postForm.startTime = new Date(val)
       }
     },
-    endTimeF: {
+    endTime: {
       get() {
         return (+new Date(this.postForm.endTime))
       },
@@ -112,12 +130,33 @@ export default {
         this.postForm.endTime = new Date(val)
       }
     }
+  },
+  methods: {
+    handleClick(params) {
+      getBoxCardData(params).then(response => {
+        console.log(params)
+        this.detailRows = response.data.items.slice(0, 10)
+        this.score = response.data.score
+        this.fileId = response.data.fileId
+        this.warnCount = 3
+        this.errCount = 1
+        this.suggest = "1、建议码率设置\n2、建议降低帧率\n"
+      })
+    }
   }
 }
 </script>
 
 <style lang="scss" scoped>
 @import "~@/styles/mixin.scss";
+
+.mallki-text {
+  position: absolute;
+  top: 0px;
+  right: 0px;
+  font-size: 20px;
+  font-weight: bold;
+}
 
 .createPost-container {
   position: relative;
@@ -163,17 +202,6 @@ export default {
       width: 100%;
       height: 100%;
       transition: all 0.2s linear;
-    }
-
-    img {
-      width: 100%;
-      height: 100%;
-      transition: all 0.2s linear;
-
-      &:hover {
-        transform: scale(1.1, 1.1);
-        filter: contrast(130%);
-      }
     }
   }
 }

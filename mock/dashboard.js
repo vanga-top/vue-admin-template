@@ -75,6 +75,8 @@ module.exports = [
       return {
         code: 20000,
         data: {
+          fileId: '@guid()',
+          score: '@float(1.0, 9.9, 0, 2)',
           'items|20': [{
             name: '@guid()',
             score: '@integer(0,100)'
