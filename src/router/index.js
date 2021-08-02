@@ -54,7 +54,6 @@ export const constantRoutes = [
       meta: { title: '首页', icon: 'dashboard' }
     }]
   },
-
   {
     path: '/analysis',
     component: Layout,
@@ -64,6 +63,17 @@ export const constantRoutes = [
       name: 'Analysis',
       component: () => import('@/views/analysis/index'),
       meta: { title: '单例分析', icon: 'el-icon-s-unfold' }
+    }]
+  },
+  {
+    path: '/batch',
+    component: Layout,
+    redirect: '/batch',
+    children: [{
+      path: 'batch',
+      name: 'Batch',
+      component: () => import('@/views/batch/index'),
+      meta: { title: '批量任务', icon: 'el-icon-s-unfold' }
     }]
   },
   {
