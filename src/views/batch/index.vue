@@ -1,6 +1,10 @@
 <template>
   <div class="app-container">
     <div class="filter-container">
+      <el-select v-model="listQuery.userId" placeholder="User" clearable style="width: 150px" class="filter-item">
+        <el-option v-for="item in users" :key="item.id" :label="item | formatUserLabel" :value="item.id"/>
+      </el-select>
+      &nbsp;
       <el-select v-model="listQuery.coach" placeholder="Coach" clearable style="width: 150px" class="filter-item">
         <el-option v-for="item in coaches" :key="item.id" :label="item.name" :value="item.id"/>
       </el-select>
@@ -90,23 +94,56 @@
         <el-form ref="dataForm" :rules="rules" :model="temp" label-position="left" label-width="100px"
                  style="width: 500px; margin-left:50px;"
         >
+          <el-form-item label="消费会员">
+            <el-select v-model="temp.userId" placeholder="选择消费用户" clearable style="width: 200px" class="filter-item">
+              <el-option v-for="item in users" :key="item.id" :label="item | formatUserLabel" :value="item.id"/>
+            </el-select>
+          </el-form-item>
           <el-form-item label="课程模版">
-            <el-select v-model="temp.courseId" class="filter-item" placeholder="选择课程模版" @change="selectCourse">
+            <el-select v-model="temp.courseId" class="filter-item" placeholder="选择课程模版" @change="selectCourse"
+                       style="width: 200px"
+            >
+              <el-option v-for="item in courseList" :key="item.id" :label="item.courseName" :value="item"/>
+            </el-select>
+          </el-form-item>
+          <el-form-item label="课程名称">
+            <el-input v-model="temp.courseName" style="width: 200px"/>
+          </el-form-item>
+          <el-form-item label="上课教练">
+            <el-select ref="coach_select" v-model="temp.techCoachId" class="filter-item" style="width: 200px">
               <el-option v-for="item in coaches" :key="item.id" :label="item.name" :value="item.id"/>
             </el-select>
           </el-form-item>
-          <el-form-item label="CourseId" >
-            <el-input v-model="temp.courseName" style="width: 200px"/>
+          <el-form-item label="原价">
+            <el-input v-model="temp.originPrice" style="width: 200px" disabled/>
           </el-form-item>
-
+          <el-form-item label="扣款">
+            <el-input v-model="temp.finalPrice" style="width: 200px"/>
+          </el-form-item>
+          <el-form-item label="开始时间" prop="startTime">
+            <el-date-picker v-model="temp.startTime" type="datetime" placeholder="Please pick a date"/>
+          </el-form-item>
+          <el-form-item label="课程时长">
+            <el-input v-model="temp.duration" style="width: 200px"/>
+            分钟
+          </el-form-item>
         </el-form>
+
+        <div slot="footer" class="dialog-footer">
+          <el-button @click="dialogFormVisible = false">
+            取消
+          </el-button>
+          <el-button type="primary" @click="dialogStatus==='create'?createData():updateData()">
+            确认
+          </el-button>
+        </div>
       </el-dialog>
     </div>
   </div>
 </template>
 
 <script>
-import { postOrderQuery } from '@/api/batch'
+import { postOrderQuery, queryCourseList, loadAllCoachInfo, queryUserNameList } from '@/api/batch'
 import Pagination from '@/components/Pagination'
 import { parseTime } from '@/utils'
 
@@ -123,6 +160,9 @@ export default {
       } else if (orderType === 1) {
         return '私教课'
       }
+    },
+    formatUserLabel(item) {
+      return item.name + '-' + item.phone
     }
   },
   data() {
@@ -138,8 +178,9 @@ export default {
         orderState: undefined,
         phone: undefined
       },
-      coaches: [{ name: 'chenhui', id: 2 }, { name: 'laowang', id: 3 }],
-      orderStates: [{ id: 1, name: '已完成' }, { id: 2, name: '预约中' }, { id: 3, name: '已取消' }],
+      coaches: [],
+      users: [],
+      orderStates: [{ id: 0, name: '已完成' }, { id: 1, name: '预约中' }, { id: 2, name: '已取消' }],
       dialogFormVisible: false,
       dialogStatus: '',
       textMap: {
@@ -147,24 +188,33 @@ export default {
         create: '新增'
       },
       rules: {
-        techCoachId: [{ required: true, message: 'type is required', trigger: 'change' }],
-        userId: [{ type: 'date', required: true, message: 'timestamp is required', trigger: 'change' }],
-        title: [{ required: true, message: 'title is required', trigger: 'blur' }]
+        startTime: [{ type: 'date', required: true, message: '时间必选', trigger: 'blur' }]
       },
+      courseList: null,
       temp: {
-        id: undefined,
-        importance: 1,
-        remark: '',
-        timestamp: new Date(),
-        title: '',
-        techCoachId: '',
+        techCoachId: null,
         courseId: undefined,
         courseName: '',
-        userId: '',
-        status: 'published'
+        userId: null,
+        originPrice: 0,
+        finalPrice: 0,
+        startTime: null,
+        duration: 0
       }
     }
-  }, methods: {
+  }, created() {
+    this.init()
+  },
+  methods: {
+    init() { // load coach data
+      loadAllCoachInfo().then(response => {
+        this.coaches = response.result
+      })
+
+      queryUserNameList().then(response => {
+        this.users = response.result
+      })
+    },
     handleQuery() {
       this.isLoading = true
       // 发请求
@@ -179,8 +229,16 @@ export default {
         }, 1.5 * 1000)
       })
     },
-    handleCreate() {
+    handleCreate() { // 添加新记录，这里需要做一些查询操作
       this.dialogStatus = 'create'
+      this.$nextTick(() => { // 这里需要清空一下
+        this.$refs['dataForm'].clearValidate()
+        this.$refs['dataForm'].resetFields()
+      })
+      // 查询course
+      queryCourseList().then(response => {
+        this.courseList = response.result
+      })
       this.dialogFormVisible = true
     },
     handleUpdate(row) {
@@ -193,8 +251,16 @@ export default {
       })
     },
     selectCourse(item) {
-      this.temp.courseName = item
-      console.log(item)
+      this.temp.courseName = item.courseName
+      this.temp.courseId = item.id
+      this.temp.techCoachId = item.coachId
+      this.temp.originPrice = item.price
+      this.temp.finalPrice = item.price
+      this.temp.duration = item.duration
+    }, createData() {
+
+    }, updateData() {
+
     }
   }
 }
