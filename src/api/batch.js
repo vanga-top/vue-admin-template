@@ -8,11 +8,35 @@ export function postOrderQuery(param) {
   })
 }
 
+export function postCreateOrder(param) {
+  return request({
+    url: '/order/create',
+    params: param,
+    method: 'post'
+  })
+}
+
 export function queryCourseList(param) {
   return request({
     url: '/course/condition',
     params: param,
     method: 'get'
+  })
+}
+
+export function queryCourseById(param) {
+  return request({
+    url: '/course/id',
+    params: param,
+    method: 'get'
+  })
+}
+
+export function queryUserType(param) {
+  return request({
+    url: '/user/type',
+    method: 'get',
+    params: param
   })
 }
 

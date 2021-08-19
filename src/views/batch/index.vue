@@ -15,8 +15,12 @@
       &nbsp;
       <el-input v-model="listQuery.phone" placeholder="User Phone" clearable style="width: 200px" class="filter-item"/>
       &nbsp;
-      <el-button class="filter-item" type="primary" icon="el-icon-search" style="margin-left: 10px"
-                 @click="handleQuery"
+      <el-button
+        class="filter-item"
+        type="primary"
+        icon="el-icon-search"
+        style="margin-left: 10px"
+        @click="handleQuery"
       >
         搜索
       </el-button>
@@ -39,7 +43,7 @@
         highlight-current-row
         style="width: 100%;"
       >
-        <el-table-column label="订单ID" prop="id" sortable="custom" align="center" width="80">
+        <el-table-column label="订单ID" prop="id" align="center" width="80">
           <template slot-scope="{row}">
             <span>{{ row.id }}</span>
           </template>
@@ -79,20 +83,29 @@
             <el-button type="primary" size="mini" @click="handleUpdate(row)">
               编辑
             </el-button>
-            <el-button type="danger" size="mini" @click="handleUpdate(row)">
+            <el-button type="danger" size="mini">
               删除
             </el-button>
           </template>
         </el-table-column>
       </el-table>
-      <pagination v-show="total>0" :total="total" :page.sync="listQuery.page" :limit.sync="listQuery.pageSize"
-                  @pagination="handleQuery"
+      <pagination
+        v-show="total>0"
+        :total="total"
+        :page.sync="listQuery.page"
+        :limit.sync="listQuery.pageSize"
+        @pagination="handleQuery"
       />
 
       <!-- 编辑/新增数据弹窗 -->
       <el-dialog :title="textMap[dialogStatus]" :visible.sync="dialogFormVisible">
-        <el-form ref="dataForm" :rules="rules" :model="temp" label-position="left" label-width="100px"
-                 style="width: 500px; margin-left:50px;"
+        <el-form
+          ref="dataForm"
+          :rules="rules"
+          :model="temp"
+          label-position="left"
+          label-width="100px"
+          style="width: 500px; margin-left:50px;"
         >
           <el-form-item label="消费会员">
             <el-select v-model="temp.userId" placeholder="选择消费用户" clearable style="width: 200px" class="filter-item">
@@ -100,8 +113,13 @@
             </el-select>
           </el-form-item>
           <el-form-item label="课程模版">
-            <el-select v-model="temp.courseId" class="filter-item" placeholder="选择课程模版" @change="selectCourse"
-                       style="width: 200px"
+
+            <el-select
+              v-model="temp.courseId"
+              class="filter-item"
+              placeholder="选择课程模版"
+              style="width: 200px"
+              @change="selectCourse"
             >
               <el-option v-for="item in courseList" :key="item.id" :label="item.courseName" :value="item"/>
             </el-select>
@@ -118,10 +136,17 @@
             <el-input v-model="temp.originPrice" style="width: 200px" disabled/>
           </el-form-item>
           <el-form-item label="扣款">
-            <el-input v-model="temp.finalPrice" style="width: 200px"/>
+            <el-input v-if="dialogStatus === 'create'" v-model="temp.finalPrice" style="width: 200px" disabled/>
+            <el-input v-if="dialogStatus === 'update'" v-model="temp.finalPrice" style="width: 200px" disabled/>
           </el-form-item>
           <el-form-item label="开始时间" prop="startTime">
-            <el-date-picker v-model="temp.startTime" type="datetime" placeholder="Please pick a date"/>
+            <el-date-picker
+              v-model="temp.startTime"
+              type="datetime"
+              value-format="yyyy-MM-dd HH:mm:ss"
+              format="yyyy-MM-dd HH:mm:ss"
+              placeholder="Please pick a date"
+            />
           </el-form-item>
           <el-form-item label="课程时长">
             <el-input v-model="temp.duration" style="width: 200px"/>
@@ -143,7 +168,14 @@
 </template>
 
 <script>
-import { postOrderQuery, queryCourseList, loadAllCoachInfo, queryUserNameList } from '@/api/batch'
+import {
+  postOrderQuery,
+  queryCourseList,
+  loadAllCoachInfo,
+  queryUserNameList,
+  postCreateOrder,
+  queryCourseById, queryUserType
+} from '@/api/batch'
 import Pagination from '@/components/Pagination'
 import { parseTime } from '@/utils'
 
@@ -180,7 +212,8 @@ export default {
       },
       coaches: [],
       users: [],
-      orderStates: [{ id: 0, name: '已完成' }, { id: 1, name: '预约中' }, { id: 2, name: '已取消' }],
+      selectUserLevel: undefined,
+      orderStates: [{ id: 0, name: '预约成功' }, { id: 1, name: '已完成' }, { id: 2, name: '已取消' }],
       dialogFormVisible: false,
       dialogStatus: '',
       textMap: {
@@ -193,13 +226,14 @@ export default {
       courseList: null,
       temp: {
         techCoachId: null,
-        courseId: undefined,
-        courseName: '',
+        courseId: null,
+        courseName: null,
         userId: null,
         originPrice: 0,
         finalPrice: 0,
         startTime: null,
-        duration: 0
+        duration: 0,
+        orderId: 0
       }
     }
   }, created() {
@@ -214,12 +248,16 @@ export default {
       queryUserNameList().then(response => {
         this.users = response.result
       })
+
+      // 查询course
+      queryCourseList().then(response => {
+        this.courseList = response.result
+      })
     },
     handleQuery() {
       this.isLoading = true
       // 发请求
       postOrderQuery(this.listQuery).then(response => {
-        console.log(response)
         this.isLoading = false
         this.list = response.result
         this.total = response.total
@@ -230,20 +268,27 @@ export default {
       })
     },
     handleCreate() { // 添加新记录，这里需要做一些查询操作
+      this.clearTemp()
       this.dialogStatus = 'create'
       this.$nextTick(() => { // 这里需要清空一下
         this.$refs['dataForm'].clearValidate()
         this.$refs['dataForm'].resetFields()
       })
-      // 查询course
-      queryCourseList().then(response => {
-        this.courseList = response.result
-      })
       this.dialogFormVisible = true
     },
     handleUpdate(row) {
-      this.temp = Object.assign({}, row) // copy obj
-      this.temp.timestamp = new Date(this.temp.timestamp)
+      this.clearTemp()
+      this.temp.orderId = row.id
+      this.temp.courseId = row.courseId
+      this.temp.userId = row.userId
+      this.temp.originPrice = row.originPrice
+      this.temp.finalPrice = row.finalPrice
+      this.temp.techCoachId = row.techCoachId
+      this.temp.startTime = new Date(parseTime(row.startTime, '{y}-{m}-{d} {h}:{i}:{s}'))
+      queryCourseById({ 'courseId': this.temp.courseId }).then(response => {
+        this.temp.duration = response.result.duration
+        this.temp.courseName = response.result.courseName
+      })
       this.dialogStatus = 'update'
       this.dialogFormVisible = true
       this.$nextTick(() => {
@@ -255,12 +300,52 @@ export default {
       this.temp.courseId = item.id
       this.temp.techCoachId = item.coachId
       this.temp.originPrice = item.price
-      this.temp.finalPrice = item.price
       this.temp.duration = item.duration
+
+      if (this.dialogStatus === 'create') {
+        queryUserType({ 'userId': this.temp.userId }).then(response => {
+          this.selectUserLevel = response.result
+          if (this.selectUserLevel != null) {
+            switch (item.courseType) {
+              case 0 :
+                this.temp.finalPrice = this.temp.originPrice - this.selectUserLevel.groupDeduct
+                break
+              case 1:
+                this.temp.finalPrice = this.temp.originPrice - this.selectUserLevel.privateDeduct
+                break
+              default:
+                this.temp.finalPrice = item.price
+            }
+          } else {
+            this.temp.finalPrice = item.price
+          }
+        })
+      }
     }, createData() {
-
+      this.temp.startTime = parseTime(this.temp.startTime, '{y}-{m}-{d} {h}:{i}:{s}')
+      const tempData = Object.assign({}, this.temp)
+      console.log(tempData.startTime)
+      postCreateOrder(tempData).then(response => {
+        this.dialogFormVisible = false
+        this.$notify({
+          title: response.code,
+          message: 'Update Successfully',
+          type: 'success',
+          duration: 2000
+        })
+      })
     }, updateData() {
-
+      console.log(this.temp.startTime)
+    },
+    clearTemp() {
+      this.temp.techCoachId = null
+      this.temp.courseId = null
+      this.temp.courseName = null
+      this.temp.userId = null
+      this.temp.originPrice = 0
+      this.temp.finalPrice = 0
+      this.temp.startTime = null
+      this.temp.duration = 0
     }
   }
 }
